@@ -7,6 +7,7 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
+import { RTL_LOCALES } from "@/i18n/config";
 
 const manrope = Manrope({
   subsets: ["latin"],
@@ -61,9 +62,10 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const locale = await getLocale();
   const messages = await getMessages();
+  const dir = (RTL_LOCALES as readonly string[]).includes(locale) ? "rtl" : "ltr";
 
   return (
-    <html lang={locale} className={manrope.variable}>
+    <html lang={locale} dir={dir} className={manrope.variable}>
       <head>
         <link
           rel="stylesheet"

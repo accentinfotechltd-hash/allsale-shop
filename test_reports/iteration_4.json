@@ -1,0 +1,73 @@
+{
+  "summary": "Iteration 4 frontend-only test of Allsale Web Phase 3 (personalised rail, /sso callback, 28-locale i18n, FULL admin RBAC e2e with owner credentials, regression smoke). 12 of 14 review items PASS. TWO CRITICAL React runtime crashes found in admin console: /admin/users and /admin/activity-log both throw 'TypeError: x.map is not a function' because the backend returns enveloped responses ({users:[...]} and {events:[...]} respectively) but the page components assume a plain array. ONE MINOR bug: SSO error toast displays '[object Object]' instead of a meaningful message for invalid tokens. Everything else (personalised rail country switching NZ→AU→US, 28 locale options + Arabic RTL flip + en LTR + Fijian fallback, SSO no-token & invalid-token redirects, admin login + OWNER role + 7 nav items, KPIs, Orders table with 100 rows, Sellers tabs, Payouts 3 tabs with 'Mark paid' visible, Team Invite modal with 3 fields + 3 roles, Logout clearing localStorage and gating /admin) works correctly.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "AdminUsers (app/admin/users/page.tsx)",
+        "issue": "Unhandled Runtime Error: 'TypeError: filtered.map is not a function' on /admin/users. Backend GET /api/admin/users returns {\"users\":[...]} (verified via direct fetch) but the page treats the response as a plain array. Page crashes — no rows render, search input never appears, blocks the entire Users feature for OWNER role.",
+        "selector": "[data-testid=\"admin-users-page\"]",
+        "priority": "CRITICAL"
+      },
+      {
+        "component": "AdminActivityLog (app/admin/activity-log/page.tsx)",
+        "issue": "Unhandled Runtime Error: 'TypeError: log.map is not a function' on /admin/activity-log. Backend GET /api/admin/activity-log returns {\"events\":[...]} but the page expects an array. Confirmed envelope payload: {events:[{id,admin_id,action,target,meta,at,actor_email},...]}. Page crashes — no audit entries render and no empty state shown.",
+        "selector": "/admin/activity-log root",
+        "priority": "CRITICAL"
+      },
+      {
+        "component": "SsoInner (app/sso/page.tsx)",
+        "issue": "When SSO callback fails (backend 422 for invalid token), the error toast shows '[object Object]' instead of a meaningful message. apiFetch is throwing an object whose .message is itself an object (likely FastAPI validation 'detail' array). Use a stringify fallback or extract detail[0].msg.",
+        "selector": ".sonner-toast / data-testid=\"sso-page\"",
+        "priority": "LOW"
+      }
+    ],
+    "integration_issues": [
+      {
+        "flow": "Admin Users data-fetch",
+        "issue": "api.adminUsers() in /app/frontend/lib/api.ts is not unwrapping the {users:[...]} envelope returned by the backend — needs `.then(r => r.users || r)` or the page needs to read `users.users`.",
+        "affected_selectors": ["[data-testid=\"admin-users-page\"]"]
+      },
+      {
+        "flow": "Admin Activity log data-fetch",
+        "issue": "Equivalent envelope mismatch: backend returns {events:[...]} but client treats as array. Either unwrap in api.adminActivityLog() or use `data.events.map(...)` in page.tsx.",
+        "affected_selectors": ["/admin/activity-log table"]
+      }
+    ],
+    "design_issues": [
+      {
+        "screen": "Personalised rail header",
+        "issues": ["Title renders without a space before the flag emoji: 'Kia ora🇳🇿' / 'G\\'day🇦🇺' / 'Hello🇺🇸'. Code uses <span className=\"ml-2\">{flag}</span> but the rendered DOM omits whitespace between the text node and the span, so the margin doesn't add visual separation in some browsers/fonts. Consider inserting a literal space: {greeting}{' '}<span>...</span> or use flexbox gap."]
+      },
+      {
+        "screen": "Global (carry-over)",
+        "issues": ["Pre-existing cosmetic console warning: woff2 font preloaded but not used within window load event (carried from iterations 1-3, non-blocking)."]
+      }
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "FIX CRITICAL: /admin/users — unwrap the {users:[...]} envelope returned by /api/admin/users (either in api.adminUsers() in /app/frontend/lib/api.ts or in app/admin/users/page.tsx at line 12: `api.adminUsers().then(r => setUsers(Array.isArray(r) ? r : r.users || []))`).",
+    "FIX CRITICAL: /admin/activity-log — unwrap the {events:[...]} envelope returned by /api/admin/activity-log (same pattern as above).",
+    "FIX LOW: /app/frontend/app/sso/page.tsx error handling — when apiFetch throws, extract a string message rather than letting `[object Object]` reach toast.error. e.g. `const msg = typeof e === 'string' ? e : (e?.message && typeof e.message === 'string' ? e.message : 'SSO sign-in failed'); toast.error(msg);` and also harden apiFetch to coerce FastAPI detail arrays into a string before throwing.",
+    "POLISH: add a literal space between greeting text and flag emoji in personalised-rail.tsx (line 60-61) — currently visually flush."
+  ],
+  "critical_code_review_comments": [
+    "RECURRING PATTERN — admin API responses use envelope objects ({users}, {events}, possibly more) but the frontend assumes plain arrays. Audit ALL admin pages (orders, sellers, payouts, team) for the same bug class — Orders happens to work (probably backend returns array) but the convention is inconsistent. Strongly recommend centralising the unwrap inside lib/api.ts so each admin page can stay simple.",
+    "SSO page sanitisation looks correct (only internal targets) but processed.current ref is set BEFORE the async call resolves — if the user navigates away mid-await and back, the second mount will skip processing. Consider clearing the ref on cleanup, or guard with an in-flight promise.",
+    "Personalised rail re-fetches on every country change but does NOT cancel in-flight requests beyond a boolean — under rapid switching (NZ→AU→US in <1s) the last-resolved request wins, which may not be the currently-selected country. Use AbortController on the fetch.",
+    "/admin/users uses /api/admin/users with no pagination — at scale (5,903+ users) this will return a huge JSON. The endpoint likely supports ?limit/?offset but the client requests all. Add server-side pagination.",
+    "Language switcher dropdown is clipped by viewport at the bottom for the lower locales (Fijian was outside viewport at 1440x900). Add max-height + overflow-y-auto to the dropdown container, or anchor it with a scrollable list."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "n/a (frontend-only)",
+    "frontend": "12/14 ≈ 86% — PASS: personalised rail country switch (NZ/AU/US), 28 locale dropdown options incl en/hi/ta/zh-TW/mi/ar, Arabic RTL flip, English LTR restore, Fijian English-fallback (option present, page renders), SSO no-token redirect to /login, SSO invalid-token redirect to /login with loading state, admin login + OWNER role + all 7 nav items, Overview 4 KPIs visible, Orders table 100 rows, Sellers tabs (all+pending), Payouts 3 tabs + Mark-paid button visible for owner, Team invite modal with 3 inputs + owner/manager/support roles, Admin logout clears localStorage[allsale_admin_token] and post-logout /admin → /admin/login, regression smoke (/, /products, /cart) all 200. FAIL: /admin/users page crashes (envelope unwrap), /admin/activity-log page crashes (envelope unwrap). Partial: SSO error toast displays [object Object] (UI redirect works, but UX text is broken)."
+  },
+  "test_credentials": "Shopper: webtest+allsale@example.com / Test@123456. Admin OWNER: owner@allsale.co.nz / AllsaleOwner2026! (used in this iteration). Admin JWT stored at localStorage['allsale_admin_token']. Login endpoint POST /api/admin/login returns {access_token, ...} — verified working.",
+  "seed_data_creation": "None. NO seller approve/reject clicked. NO payout marked paid. NO admin invited (modal opened then closed via Escape). Backend state unchanged.",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Phase 3 admin envelope bugs: backend returns {users:[...]} and {events:[...]} (verified via direct fetch with admin JWT). When the fix lands, retest /admin/users (verify table rows render, search 'webtest' filters to >=1 row, the test user webtest+allsale@example.com appears) and /admin/activity-log (verify owner's own 'login' actions appear as audit entries — there were 3+ at test time). Admin login form testids on this iteration's deployment were 'admin-login-email'/'admin-login-password'/'admin-login-submit' (matches review-request contract — fixed from iteration 3). Personalised rail country switcher data-testid='currency-selector' opens dropdown with country-option-{NZ|AU|US|GB|CA}. Greeting strings in personalised-rail.tsx: NZ='Kia ora 🇳🇿', AU=\"G'day 🇦🇺\", US='Hello 🇺🇸'. Language dropdown is scrollable but cut off at viewport bottom — for option-fj test, scroll the dropdown or use 4000px viewport. Locale cookie: allsale_locale (1-year, SameSite=Lax). Arabic switch requires page.reload() to apply <html dir='rtl'>.",
+  "rca of the issue": "Both /admin/users and /admin/activity-log crashes have IDENTICAL root cause: API envelope mismatch. Backend /api/admin/users returns body `{\"users\":[{...},{...}]}` and /api/admin/activity-log returns `{\"events\":[{...},{...}]}` (both confirmed via direct fetch with valid OWNER JWT — status 200, payloads truncated above). The page components (app/admin/users/page.tsx line 12 & app/admin/activity-log/page.tsx) call `api.adminUsers().then(setUsers)` / `api.adminActivityLog().then(setLog)` and immediately invoke `.filter(...)` / `.map(...)` on the result as if it were an array. Since the resolved value is an OBJECT, .filter/.map blow up. REPRODUCTION: login as owner, navigate to /admin/users or /admin/activity-log → red Next.js error overlay. MITIGATION: either (a) in /app/frontend/lib/api.ts unwrap inside the api.adminUsers / api.adminActivityLog helpers: `return r.users ?? r` / `return r.events ?? r`; or (b) in each page: `setUsers(Array.isArray(data) ? data : (data.users ?? []))`. Option (a) is preferable because it keeps page code simple AND defends against the same bug class on other admin endpoints. The SSO toast bug RCA: apiFetch (in /app/frontend/lib/api.ts) throws a non-Error object whose .message is the FastAPI validation detail array; sonner's toast.error coerces it to '[object Object]'. Fix: stringify FastAPI detail arrays in apiFetch before throwing."
+}

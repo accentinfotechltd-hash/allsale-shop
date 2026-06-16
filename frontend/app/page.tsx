@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ProductCard } from "@/components/product-card";
+import { PersonalisedRail } from "@/components/personalised-rail";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { BACKEND_URL } from "@/lib/utils";
 import type { Product, Taxonomy } from "@/lib/api";
@@ -132,6 +133,9 @@ export default async function HomePage() {
           ))}
         </div>
       </section>
+
+      {/* PERSONALISED RAIL — Curated for you in {country} */}
+      <PersonalisedRail />
 
       {/* CATEGORY BENTO */}
       {taxonomy.length > 0 && (
