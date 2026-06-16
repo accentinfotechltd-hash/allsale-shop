@@ -1,0 +1,51 @@
+{
+  "summary": "Iteration 2 frontend re-test on allsale-web. All 3 previously-broken flows are FIXED and verified end-to-end: cart quantity edits (increment/decrement/remove), Stripe checkout with new shipping-address modal (live redirect to checkout.stripe.com confirmed, payment NOT submitted), and logout redirect to home. Cart counters (header badge, /cart heading, /account Cart tile) are now consistent. Previously-passing smoke flows still pass (home SSR, search, unauth guards on /cart and /account, 404 page, products listing filters/sort).",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Header preload",
+        "issues": ["Pre-existing cosmetic console warning: woff2 font preloaded but not used within window's load event. Not blocking — same as iteration 1."]
+      }
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "lib/api.ts cartSet does DELETE then re-POST sequentially — if the DELETE succeeds but the POST fails (network drop), the line is silently lost. Consider wrapping with a try/catch that re-POSTs the prior qty on failure, or expose a dedicated PUT/PATCH endpoint on the backend.",
+    "Shipping address modal does not validate phone/postcode format. Stripe will accept it for the test, but real users may get a 422 later — add minimal regex client-side or rely on backend validation messages surfaced via toast.",
+    "Address persisted to localStorage under 'allsale_shipping_address' in plain JSON (includes full name + phone). Acceptable for convenience but worth flagging from a privacy standpoint.",
+    "Header preload of woff2 still triggers a console warning on every page load — minor but should be cleaned up.",
+    "Address modal's country <select> only lists 5 countries; if user is shipping elsewhere the form forces NZ/AU/US/GB/CA only. Backend supports more — consider syncing the country list with /api/currency/rates countries."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "n/a (frontend-only)",
+    "frontend": "100% on re-test scope (4/4) + 6/6 smoke flows (home, search, /cart guard, /account guard, 404, products filters/sort)"
+  },
+  "test_credentials": "webtest+allsale@example.com / Test@123456 — valid; JWT stored at localStorage['allsale_token'].",
+  "seed_data_creation": "Added 1 cart line (product 55f0a169..., qty 2) via PDP add-to-cart, then exercised increment/decrement and finally removed it. Cart is empty after the test run. Also wrote one shipping address to localStorage on the test browser (does not affect the backend).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend cart contract: POST /api/cart is ADDITIVE on quantity; DELETE /api/cart/{product_id} removes the line; there is no PATCH. Frontend now correctly: increment -> cartAdd(pid,1); decrement -> cartSet which DELETE+POST; remove -> cartRemove DELETE. Checkout requires an `address` object in POST /api/checkout/session; the AddressModal collects it. Logout uses window.location.href='/' for a hard nav. Stripe checkout returns a LIVE cs_live_* URL — never proceed past the redirect.",
+  "rca of the issue": {
+    "cart_inc_dec_remove": {
+      "status": "FIXED",
+      "verification": "After login + adding qty=2 of pid 55f0a169 via PDP: cart shows qty=2 (no inflation). Clicking cart-increment-* once -> qty=3 (delta +1). Clicking cart-decrement-* once -> qty=2 (delta -1). Clicking cart-remove-* -> line removed (GET /api/cart returns 0 items). Verified by both UI [data-testid=cart-qty-{pid}] readback and direct GET /api/cart over the network."
+    },
+    "checkout_422": {
+      "status": "FIXED",
+      "verification": "Clicking [data-testid=checkout-button] now opens [data-testid=address-modal] instead of immediately calling the API. After filling the NZ address (Web Tester / 123 Queen St / Auckland / Auckland / 1010 / NZ / +64211234567) and clicking [data-testid=address-submit], POST /api/checkout/session returned status 200 and the browser was redirected to https://checkout.stripe.com/c/pay/cs_live_a180CAZ4Kiu... — test STOPPED at the Stripe page; no payment submitted."
+    },
+    "logout_redirect": {
+      "status": "FIXED",
+      "verification": "From /account, clicking [data-testid=account-logout-button] cleared localStorage['allsale_token'] AND landed on https://allsale-store.preview.emergentagent.com/ (home). It did NOT bounce through /login?next=... like before."
+    },
+    "cart_counter_consistency": {
+      "status": "FIXED",
+      "verification": "With 1 line at qty=2: header badge='2', /cart heading='Your cart (2 items)', /account Cart tile='Cart (2)'. After removing the line: badge hidden/0, /account tile shows 'Cart (0)' with 'Your cart is empty' subtitle. All three counters agree on total quantity."
+    }
+  }
+}

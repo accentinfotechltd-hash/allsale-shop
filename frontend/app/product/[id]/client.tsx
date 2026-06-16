@@ -31,7 +31,7 @@ export function ProductDetailClient({ product }: { product: Product }) {
     }
     setAdding(true);
     try {
-      await api.updateCart({ product_id: product.id, quantity: qty, action: "add" });
+      await api.cartAdd(product.id, qty);
       await refreshCart();
       toast.success(`Added ${qty}× ${product.name} to your cart`);
     } catch (e: any) {

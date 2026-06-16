@@ -34,7 +34,7 @@ export default function AccountOverview() {
         <Link href="/cart" className="group bg-white rounded-2xl border border-slate-200 p-6 hover:border-primary hover:shadow-md transition">
           <ShoppingBag className="w-7 h-7 text-primary mb-4" />
           <div className="heading-sm">Cart ({cartCount})</div>
-          <div className="text-sm text-slate-600 mt-1">{cart?.items?.length ? "Ready to checkout" : "Your cart is empty"}</div>
+          <div className="text-sm text-slate-600 mt-1">{cart?.items?.length ? `${cart.items.length} ${cart.items.length === 1 ? "item" : "items"} ready to checkout` : "Your cart is empty"}</div>
           <div className="mt-4 inline-flex items-center gap-1 text-primary font-bold text-sm group-hover:gap-2 transition-all">
             Go to cart <ArrowRight className="w-4 h-4" />
           </div>

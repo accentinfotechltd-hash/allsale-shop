@@ -155,8 +155,17 @@ export const api = {
 
   // cart (auth required)
   getCart: () => apiFetch<Cart>(`/api/cart`, { auth: true }),
-  updateCart: (body: { product_id: string; quantity: number; action: "add" | "set" | "remove" }) =>
-    apiFetch<Cart>(`/api/cart`, { method: "POST", auth: true, body: JSON.stringify(body) }),
+  // Backend contract: POST /api/cart ADDS abs(quantity) to existing line.
+  // To set or decrement, the client must DELETE then re-POST.
+  cartAdd: (product_id: string, quantity = 1) =>
+    apiFetch<Cart>(`/api/cart`, { method: "POST", auth: true, body: JSON.stringify({ product_id, quantity }) }),
+  cartRemove: (product_id: string) =>
+    apiFetch<Cart>(`/api/cart/${product_id}`, { method: "DELETE", auth: true }),
+  cartSet: async (product_id: string, quantity: number): Promise<Cart> => {
+    await apiFetch(`/api/cart/${product_id}`, { method: "DELETE", auth: true });
+    if (quantity <= 0) return api.getCart();
+    return apiFetch<Cart>(`/api/cart`, { method: "POST", auth: true, body: JSON.stringify({ product_id, quantity }) });
+  },
   applyCoupon: (code: string) =>
     apiFetch<Cart>(`/api/cart/coupon`, { method: "POST", auth: true, body: JSON.stringify({ code }) }),
 
@@ -165,6 +174,7 @@ export const api = {
     origin_url: string;
     currency: string;
     country: string;
+    address: ShippingAddress;
     shipping_tier?: string;
     shipping_courier_id?: string;
   }) =>

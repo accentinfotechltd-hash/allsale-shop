@@ -67,7 +67,11 @@ export default function AccountLayout({ children }: { children: ReactNode }) {
                 );
               })}
               <button
-                onClick={() => { logout(); router.push("/"); }}
+                onClick={() => {
+                  logout();
+                  // Hard-navigate so the protected-route effect doesn't bounce us to /login
+                  if (typeof window !== "undefined") window.location.href = "/";
+                }}
                 data-testid="account-logout-button"
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100 transition"
               >

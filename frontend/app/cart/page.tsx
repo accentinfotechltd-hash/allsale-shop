@@ -4,10 +4,29 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/components/providers";
-import { api } from "@/lib/api";
+import { api, type ShippingAddress } from "@/lib/api";
 import { convertPriceNZD, formatPrice } from "@/lib/utils";
-import { Trash2, Minus, Plus, ShoppingBag, Tag, Loader2 } from "lucide-react";
+import { Trash2, Minus, Plus, ShoppingBag, Tag, Loader2, X, MapPin } from "lucide-react";
 import { toast } from "sonner";
+
+const COUNTRY_OPTIONS = [
+  { code: "NZ", name: "New Zealand", flag: "🇳🇿" },
+  { code: "AU", name: "Australia", flag: "🇦🇺" },
+  { code: "US", name: "United States", flag: "🇺🇸" },
+  { code: "GB", name: "United Kingdom", flag: "🇬🇧" },
+  { code: "CA", name: "Canada", flag: "🇨🇦" },
+];
+
+const ADDRESS_LS_KEY = "allsale_shipping_address";
+
+function loadSavedAddress(): Partial<ShippingAddress> {
+  if (typeof window === "undefined") return {};
+  try {
+    return JSON.parse(window.localStorage.getItem(ADDRESS_LS_KEY) || "{}");
+  } catch {
+    return {};
+  }
+}
 
 export default function CartPage() {
   const router = useRouter();
@@ -15,6 +34,7 @@ export default function CartPage() {
   const [updating, setUpdating] = useState<string | null>(null);
   const [coupon, setCoupon] = useState("");
   const [couponLoading, setCouponLoading] = useState(false);
+  const [showAddress, setShowAddress] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   useEffect(() => {
@@ -37,7 +57,23 @@ export default function CartPage() {
     if (q < 0) return;
     setUpdating(product_id);
     try {
-      await api.updateCart({ product_id, quantity: q, action: q === 0 ? "remove" : "set" });
+      if (q === 0) {
+        await api.cartRemove(product_id);
+      } else {
+        await api.cartSet(product_id, q);
+      }
+      await refreshCart();
+    } catch (e: any) {
+      toast.error(e?.message || "Could not update cart");
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const incrementQty = async (product_id: string) => {
+    setUpdating(product_id);
+    try {
+      await api.cartAdd(product_id, 1);
       await refreshCart();
     } catch (e: any) {
       toast.error(e?.message || "Could not update cart");
@@ -61,14 +97,19 @@ export default function CartPage() {
     }
   };
 
-  const goCheckout = async () => {
+  const startCheckout = async (address: ShippingAddress) => {
     if (items.length === 0) return;
     setCheckoutLoading(true);
     try {
+      // Save for next time
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(ADDRESS_LS_KEY, JSON.stringify(address));
+      }
       const res = await api.checkoutSession({
         origin_url: window.location.origin,
         currency,
-        country,
+        country: address.country,
+        address,
       });
       window.location.href = res.url;
     } catch (e: any) {
@@ -100,9 +141,11 @@ export default function CartPage() {
   const discount = cart?.discount_nzd ?? 0;
   const total = cart?.total_nzd ?? subtotal + shipping - discount;
 
+  const totalQty = items.reduce((s, i) => s + (i.quantity || 0), 0);
+
   return (
     <div className="container-px py-8 md:py-12" data-testid="cart-page">
-      <h1 className="heading-md mb-8">Your cart ({items.length})</h1>
+      <h1 className="heading-md mb-8">Your cart ({totalQty} {totalQty === 1 ? "item" : "items"})</h1>
 
       <div className="grid lg:grid-cols-[1fr_400px] gap-10">
         <div className="space-y-4">
@@ -131,15 +174,17 @@ export default function CartPage() {
                         disabled={updating === it.product_id}
                         className="w-8 h-8 rounded-full bg-white shadow-sm hover:bg-slate-50 inline-flex items-center justify-center disabled:opacity-50"
                         data-testid={`cart-decrement-${it.product_id}`}
+                        aria-label="Decrease quantity"
                       >
                         <Minus className="w-3 h-3" />
                       </button>
-                      <span className="w-9 text-center font-bold text-sm">{it.quantity}</span>
+                      <span className="w-9 text-center font-bold text-sm" data-testid={`cart-qty-${it.product_id}`}>{it.quantity}</span>
                       <button
-                        onClick={() => setQty(it.product_id, it.quantity + 1)}
+                        onClick={() => incrementQty(it.product_id)}
                         disabled={updating === it.product_id}
                         className="w-8 h-8 rounded-full bg-white shadow-sm hover:bg-slate-50 inline-flex items-center justify-center disabled:opacity-50"
                         data-testid={`cart-increment-${it.product_id}`}
+                        aria-label="Increase quantity"
                       >
                         <Plus className="w-3 h-3" />
                       </button>
@@ -213,7 +258,7 @@ export default function CartPage() {
             </div>
 
             <button
-              onClick={goCheckout}
+              onClick={() => setShowAddress(true)}
               disabled={checkoutLoading || items.length === 0}
               className="btn-primary w-full text-base py-3.5"
               data-testid="checkout-button"
@@ -226,6 +271,174 @@ export default function CartPage() {
             </div>
           </div>
         </aside>
+      </div>
+
+      {/* address modal */}
+      {showAddress && (
+        <AddressModal
+          defaultCountry={country}
+          defaultName={user.full_name || ""}
+          onClose={() => setShowAddress(false)}
+          onSubmit={(addr) => startCheckout(addr)}
+          loading={checkoutLoading}
+        />
+      )}
+    </div>
+  );
+}
+
+function AddressModal({
+  defaultCountry,
+  defaultName,
+  onClose,
+  onSubmit,
+  loading,
+}: {
+  defaultCountry: string;
+  defaultName: string;
+  onClose: () => void;
+  onSubmit: (addr: ShippingAddress) => void;
+  loading: boolean;
+}) {
+  const saved = loadSavedAddress();
+  const [addr, setAddr] = useState<ShippingAddress>({
+    full_name: saved.full_name || defaultName || "",
+    line1: saved.line1 || "",
+    line2: saved.line2 || "",
+    city: saved.city || "",
+    region: saved.region || "",
+    postcode: saved.postcode || "",
+    country: saved.country || defaultCountry || "NZ",
+    phone: saved.phone || "",
+  });
+
+  const set = (k: keyof ShippingAddress) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+    setAddr({ ...addr, [k]: e.target.value });
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(addr);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" data-testid="address-modal">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-white rounded-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
+        <div className="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <MapPin className="w-5 h-5 text-primary" />
+              <h2 className="font-heading text-xl font-extrabold">Shipping address</h2>
+            </div>
+            <p className="text-xs text-slate-500 mt-1">Required to calculate shipping and duties</p>
+          </div>
+          <button onClick={onClose} className="p-2 -mr-2 rounded-full hover:bg-slate-100" data-testid="address-modal-close" aria-label="Close">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <form onSubmit={submit} className="p-6 space-y-4">
+          <div>
+            <label className="eyebrow block mb-2">Full name</label>
+            <input
+              required
+              value={addr.full_name}
+              onChange={set("full_name")}
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary focus:ring-2 focus:ring-orange-200 focus:outline-none text-sm font-medium"
+              data-testid="address-fullname"
+            />
+          </div>
+          <div>
+            <label className="eyebrow block mb-2">Street address</label>
+            <input
+              required
+              placeholder="Line 1"
+              value={addr.line1}
+              onChange={set("line1")}
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary focus:ring-2 focus:ring-orange-200 focus:outline-none text-sm font-medium mb-2"
+              data-testid="address-line1"
+            />
+            <input
+              placeholder="Line 2 (apartment, suite — optional)"
+              value={addr.line2 || ""}
+              onChange={set("line2")}
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary focus:ring-2 focus:ring-orange-200 focus:outline-none text-sm font-medium"
+              data-testid="address-line2"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="eyebrow block mb-2">City</label>
+              <input
+                required
+                value={addr.city}
+                onChange={set("city")}
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary focus:ring-2 focus:ring-orange-200 focus:outline-none text-sm font-medium"
+                data-testid="address-city"
+              />
+            </div>
+            <div>
+              <label className="eyebrow block mb-2">Region / State</label>
+              <input
+                required
+                value={addr.region}
+                onChange={set("region")}
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary focus:ring-2 focus:ring-orange-200 focus:outline-none text-sm font-medium"
+                data-testid="address-region"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="eyebrow block mb-2">Postcode</label>
+              <input
+                required
+                value={addr.postcode}
+                onChange={set("postcode")}
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary focus:ring-2 focus:ring-orange-200 focus:outline-none text-sm font-medium"
+                data-testid="address-postcode"
+              />
+            </div>
+            <div>
+              <label className="eyebrow block mb-2">Country</label>
+              <select
+                required
+                value={addr.country}
+                onChange={set("country")}
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary focus:ring-2 focus:ring-orange-200 focus:outline-none text-sm font-medium bg-white"
+                data-testid="address-country"
+              >
+                {COUNTRY_OPTIONS.map((c) => (
+                  <option key={c.code} value={c.code}>{c.flag} {c.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="eyebrow block mb-2">Phone</label>
+            <input
+              required
+              type="tel"
+              placeholder="+64 21 123 4567"
+              value={addr.phone}
+              onChange={set("phone")}
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary focus:ring-2 focus:ring-orange-200 focus:outline-none text-sm font-medium"
+              data-testid="address-phone"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn-primary w-full text-base py-3.5"
+            data-testid="address-submit"
+          >
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Continue to payment"}
+          </button>
+          <p className="text-[11px] text-slate-500 text-center">
+            You&apos;ll be redirected to Stripe Checkout to enter card details.
+          </p>
+        </form>
       </div>
     </div>
   );
