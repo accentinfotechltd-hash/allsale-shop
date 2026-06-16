@@ -55,7 +55,7 @@ export default function AdminLoginPage() {
                 required type="email" value={email} onChange={(e) => setEmail(e.target.value)}
                 placeholder="admin@allsale.co.nz"
                 className="w-full pl-11 pr-4 py-3 rounded-full border border-slate-200 focus:border-slate-900 focus:ring-2 focus:ring-slate-200 focus:outline-none text-sm font-medium"
-                data-testid="admin-email-input"
+                data-testid="admin-login-email"
               />
             </div>
           </div>
@@ -66,14 +66,14 @@ export default function AdminLoginPage() {
               <input
                 required type={show ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)}
                 className="w-full pl-11 pr-11 py-3 rounded-full border border-slate-200 focus:border-slate-900 focus:ring-2 focus:ring-slate-200 focus:outline-none text-sm font-medium"
-                data-testid="admin-password-input"
+                data-testid="admin-login-password"
               />
               <button type="button" onClick={() => setShow((v) => !v)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700">
                 {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
           </div>
-          <button type="submit" disabled={loading} className="w-full inline-flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white rounded-full px-6 py-3 font-bold transition disabled:opacity-50" data-testid="admin-submit">
+          <button type="submit" disabled={loading} className="w-full inline-flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white rounded-full px-6 py-3 font-bold transition disabled:opacity-50" data-testid="admin-login-submit">
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Sign in"}
           </button>
         </form>

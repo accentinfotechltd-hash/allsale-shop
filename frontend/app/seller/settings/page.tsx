@@ -47,7 +47,7 @@ export default function SellerSettings() {
       <h1 className="heading-lg mb-2">Settings</h1>
       <p className="text-slate-600 mb-8">Manage your store identity, contact and payout details.</p>
 
-      <form onSubmit={submit} className="space-y-6">
+      <form onSubmit={submit} className="space-y-6" data-testid="settings-form">
         <Card title="Storefront">
           <Field label="Store display name">
             <input value={s.store_display_name || ""} onChange={(e) => set("store_display_name", e.target.value)} className="seller-input" data-testid="set-store-name" />
