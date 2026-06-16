@@ -1,0 +1,123 @@
+{
+  "theme_and_archetype": {
+    "theme": "Light",
+    "archetype": "Archetype 1: Organic & Earthy",
+    "reasoning": "Fits the 'Indian Bazaar' brand requirement perfectly. Needs warmth, trust, and a natural, tactile feel to present cross-border Indian craftsmanship appealingly, avoiding the generic sterile look of standard e-commerce platforms."
+  },
+  "typography": {
+    "font_family_headings": "Cabinet Grotesk",
+    "font_family_body": "Manrope",
+    "headings_classes": "font-bold tracking-tight text-slate-900",
+    "body_classes": "text-base text-slate-700 leading-relaxed font-medium",
+    "scale": {
+      "h1": "text-4xl sm:text-5xl lg:text-6xl tracking-tighter leading-none",
+      "h2": "text-2xl sm:text-3xl lg:text-4xl tracking-tight",
+      "h3": "text-xl sm:text-2xl tracking-tight",
+      "h4": "text-lg sm:text-xl",
+      "body": "text-base sm:text-sm",
+      "small_labels": "text-xs tracking-[0.2em] uppercase font-bold text-slate-500"
+    }
+  },
+  "color_palette": {
+    "primary": {
+      "DEFAULT": "#F97316",
+      "hover": "#EA580C",
+      "foreground": "#FFFFFF"
+    },
+    "background": "#FAFAF9",
+    "surface": "#FFFFFF",
+    "text": {
+      "primary": "#0F172A",
+      "secondary": "#475569",
+      "muted": "#94A3B8"
+    },
+    "accent_seller": {
+      "DEFAULT": "#7C3AED",
+      "foreground": "#FFFFFF"
+    },
+    "accent_finance": {
+      "DEFAULT": "#10B981",
+      "foreground": "#FFFFFF"
+    },
+    "border": "#E2E8F0"
+  },
+  "spacing_and_layout": {
+    "container_padding": "px-4 md:px-8 lg:px-12 max-w-7xl mx-auto",
+    "section_gap": "py-16 md:py-24",
+    "grid_system": {
+      "product_listing": "grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6",
+      "bento_featured": "grid-cols-1 md:grid-cols-6 lg:grid-cols-12 gap-8"
+    },
+    "border_radius": {
+      "cards": "rounded-2xl",
+      "buttons": "rounded-full"
+    }
+  },
+  "component_variants": {
+    "buttons": {
+      "primary": "bg-orange-500 hover:bg-orange-600 text-white shadow-md hover:shadow-lg transition-all rounded-full px-6 py-2.5 font-bold tracking-wide",
+      "secondary": "bg-white border-2 border-slate-200 hover:border-slate-300 text-slate-900 rounded-full px-6 py-2.5 font-bold transition-all",
+      "seller": "bg-violet-600 hover:bg-violet-700 text-white rounded-full px-4 py-2 text-sm font-semibold shadow-sm"
+    },
+    "cards": {
+      "product": "bg-white border border-slate-100 rounded-2xl overflow-hidden hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] transition-all duration-300 group flex flex-col",
+      "seller_info": "bg-violet-50 border border-violet-100 rounded-xl p-4 text-violet-900"
+    },
+    "badges": {
+      "in_stock": "bg-emerald-100 text-emerald-800 text-xs px-2.5 py-0.5 rounded-full font-bold tracking-wide border border-emerald-200",
+      "seller": "bg-violet-100 text-violet-800 text-xs px-2.5 py-0.5 rounded-full font-bold tracking-wide border border-violet-200"
+    },
+    "header": {
+      "style": "sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/50 shadow-sm"
+    }
+  },
+  "motion_guidelines": {
+    "hover_states": "Soft lift (-translate-y-1) and ambient shadow increase on product cards.",
+    "add_to_cart": "Micro-interaction: button scale down to 0.95 on active, slight pulse effect on success. Badge counter pop animation in header.",
+    "page_transitions": "Smooth fade-in for page content to maintain perceived performance and premium feel."
+  },
+  "page_specific_guidelines": {
+    "homepage": "Hero carousel with dark transparent overlay (max bg-black/40) for text contrast. Bento-grid for featured categories. Multi-currency and country switcher prominently shown in header.",
+    "product_list": "Sidebar layout on desktop (250px width for filters), 3-4 column product grid. Mobile uses a slide-out sheet or drawer for filters.",
+    "product_detail": "Sticky add-to-cart on mobile scroll. Image gallery on left, details on right. Seller trust badges (violet accent) and Shiprocket integration info visible.",
+    "cart_checkout": "Clean checkout flow. Clearly show subtotal, shipping, duties. Finance accents (emerald) for secure Stripe checkout."
+  },
+  "media_urls": {
+    "hero_carousel": [
+      {
+        "url": "https://images.unsplash.com/photo-1654764746225-e63f5e90facd?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMzJ8MHwxfHNlYXJjaHwyfHxpbmRpYW4lMjBmYXNoaW9ufGVufDB8fHx8MTc4MTU3MTQ3Nnww&ixlib=rb-4.1.0&q=85",
+        "description": "Woman in red and gold bridal outfit",
+        "category": "hero",
+        "position": "center",
+        "title": "Bridal Collection"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1716816211590-c15a328a5ff0?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzF8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBzcGljZXN8ZW58MHx8fHwxNzgxNTcxNDc2fDA&ixlib=rb-4.1.0&q=85",
+        "description": "Table topped with different types of spices",
+        "category": "hero",
+        "position": "center",
+        "title": "Authentic Spices"
+      }
+    ],
+    "categories": {
+      "fashion": "https://images.unsplash.com/photo-1599746146388-a7ec2004b67a?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMzJ8MHwxfHNlYXJjaHwzfHxpbmRpYW4lMjBmYXNoaW9ufGVufDB8fHx8MTc4MTU3MTQ3Nnww&ixlib=rb-4.1.0&q=85",
+      "jewelry": "https://images.unsplash.com/photo-1756483560049-e7b2208f99a0?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NTZ8MHwxfHNlYXJjaHwyfHxpbmRpYW4lMjBqZXdlbHJ5fGVufDB8fHx8MTc4MTU3MTQ3Nnww&ixlib=rb-4.1.0&q=85",
+      "spices": "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzF8MHwxfHNlYXJjaHwzfHxpbmRpYW4lMjBzcGljZXN8ZW58MHx8fHwxNzgxNTcxNDc2fDA&ixlib=rb-4.1.0&q=85",
+      "home_decor": "https://images.unsplash.com/photo-1550583074-288b9c016df5?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NjV8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBoYW5kaWNyYWZ0fGVufDB8fHx8MTc4MTU3MTQ3Nnww&ixlib=rb-4.1.0&q=85"
+    },
+    "placeholders": {
+      "product_1": "https://images.unsplash.com/photo-1671642883395-0ab89c3ac890?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NTZ8MHwxfHNlYXJjaHwzfHxpbmRpYW4lMjBqZXdlbHJ5fGVufDB8fHx8MTc4MTU3MTQ3Nnww&ixlib=rb-4.1.0&q=85",
+      "product_2": "https://images.unsplash.com/photo-1620619767323-b95a89183081?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NjV8MHwxfHNlYXJjaHwyfHxpbmRpYW4lMjBoYW5kaWNyYWZ0fGVufDB8fHx8MTc4MTU3MTQ3Nnww&ixlib=rb-4.1.0&q=85",
+      "product_3": "https://images.unsplash.com/photo-1581600140682-d4e68c8cde32?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzF8MHwxfHNlYXJjaHwyfHxpbmRpYW4lMjBzcGljZXN8ZW58MHx8fHwxNzgxNTcxNDc2fDA&ixlib=rb-4.1.0&q=85"
+    }
+  },
+  "testing_attributes_required": [
+    "data-testid='add-to-cart-button'",
+    "data-testid='product-card-link'",
+    "data-testid='checkout-button'",
+    "data-testid='login-submit-button'",
+    "data-testid='currency-selector'",
+    "data-testid='category-filter'"
+  ],
+  "instructions_to_main_agent": "Ensure shadcn/ui components are modified to reflect the warm, slightly rounded styling instead of default severe Vercel looks. Strip away standard Next/Vercel defaults. Use 'lucide-react' for all icons. Apply the specified Cabinet Grotesk for headings and Manrope for body text. Enforce responsive grid layouts that keep e-commerce cards breathable. Never use Inter or Roboto."
+}
