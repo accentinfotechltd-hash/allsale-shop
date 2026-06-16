@@ -6,6 +6,9 @@ import { api, type Product } from "@/lib/api";
 import { ProductCard } from "@/components/product-card";
 import { useApp } from "@/components/providers";
 import { ArrowRight, Sparkles } from "lucide-react";
+import { getVariant, trackExperiment, type Variant } from "@/lib/ab";
+
+const EXPERIMENT = "personalised_rail_v1";
 
 const COUNTRY_NAME: Record<string, { name: string; flag: string; greeting: string }> = {
   NZ: { name: "New Zealand", flag: "🇳🇿", greeting: "Kia ora" },
@@ -18,20 +21,27 @@ const COUNTRY_NAME: Record<string, { name: string; flag: string; greeting: strin
 export function PersonalisedRail() {
   const { country, user } = useApp();
   const [products, setProducts] = useState<Product[] | null>(null);
+  const [variant, setVariantState] = useState<Variant | null>(null);
+
+  // Assign a sticky A/B bucket on mount, then track exposure.
+  useEffect(() => {
+    const v = getVariant(EXPERIMENT);
+    setVariantState(v);
+    trackExperiment(EXPERIMENT, v, { country, userId: user?.id });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
+    if (variant !== "treatment") return; // only fetch when the rail is going to show
     let cancelled = false;
     (async () => {
       try {
-        // Try country-popular first
         let list = await api
           .products({ country, sort: "popular", limit: 12 } as any)
           .catch(() => null);
-        // Fallback: just regular popular
         if (!list || list.length === 0) {
           list = await api.products({ sort: "popular", limit: 12 } as any).catch(() => []);
         }
-        // Final fallback: anything
         if (!list || list.length === 0) {
           list = await api.products({ limit: 12 });
         }
@@ -43,12 +53,17 @@ export function PersonalisedRail() {
     return () => {
       cancelled = true;
     };
-  }, [country]);
+  }, [country, variant]);
+
+  // While we're deciding bucket on the client, render nothing (avoids hydration flicker).
+  if (variant === null) return null;
+  // Control bucket: hide the rail entirely so we can attribute the lift.
+  if (variant === "control") return null;
 
   const c = COUNTRY_NAME[country] || COUNTRY_NAME.NZ;
 
   return (
-    <section className="container-px py-12 md:py-16" data-testid="personalised-rail">
+    <section className="container-px py-12 md:py-16" data-testid="personalised-rail" data-variant={variant}>
       <div className="rounded-3xl border border-orange-100 bg-gradient-to-br from-orange-50/80 via-amber-50/60 to-rose-50/80 p-6 md:p-10">
         <div className="flex flex-wrap items-end justify-between gap-4 mb-7">
           <div>

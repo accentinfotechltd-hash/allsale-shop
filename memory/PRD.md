@@ -48,14 +48,27 @@ country & currency switcher (geo-IP).
 - **Cross-domain SSO** (`/sso`): accepts `?token=…&target=…` from the
   classifieds site, exchanges via `POST /api/auth/sso/callback`, sanitises
   target to internal paths only, stores the buyer JWT.
-- **28-locale registry** (Indian 13 + Global 12 + Pacific 4). Files for 26
-  locales are stubs ({}) waiting for real translations — UI falls back to
-  English seamlessly. RTL automatic for `ar` and `ur`.
+- **All 28 locales live** (Indian 13 + Global 12 + Pacific 4) pulled from
+  `accentinfotechltd-hash/allsaleindia/main/frontend/i18n_export/`. RTL
+  automatic for `ar` and `ur`. Verified via screenshot in Arabic — full
+  layout mirror flips (logo, search, hero, marquee).
 - **Admin RBAC full e2e** with `owner@allsale.co.nz` — fixed two CRITICAL
   envelope-unwrap bugs (`/api/admin/users` returns `{users:[]}`,
   `/api/admin/activity-log` returns `{events:[]}`) and one LOW SSO toast
-  bug (FastAPI detail arrays now stringified into readable messages).
-- Iteration 5 → 100% pass on all regression items.
+  bug. Iteration 5 → 100% pass.
+
+### Phase 3.5 — A/B test for personalised rail
+- **`lib/ab.ts`**: tiny client-side A/B framework with cookie-stable
+  50/50 buckets per experiment (`allsale_ab_<experiment>`, 30-day TTL).
+- **URL override**: `?variant=control` or `?variant=treatment` overrides
+  and sticks the bucket for QA / sharing.
+- **Experiment `personalised_rail_v1`** wired: treatment bucket sees the
+  rail; control bucket gets the rail removed from the DOM entirely (clean
+  attribution). Exposure event fires via `window.allsaleTrack` if a host
+  page wires one up, else `console.info("[ab]", …)`.
+- Variant is decided client-side (so cookie persistence works) — initial
+  SSR HTML omits the rail, hydration paints it for treatment users only.
+  No hydration mismatch warnings.
 
 ## Open backlog (P2)
 
