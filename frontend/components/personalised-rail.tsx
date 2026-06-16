@@ -58,7 +58,8 @@ export function PersonalisedRail() {
             </div>
             <h2 className="heading-lg" data-testid="personalised-rail-title">
               {user?.full_name ? `${c.greeting}, ${user.full_name.split(" ")[0]}` : c.greeting}
-              <span className="ml-2 text-3xl">{c.flag}</span>
+              {" "}
+              <span className="ml-1 inline-block text-3xl align-middle">{c.flag}</span>
             </h2>
             <p className="text-slate-700 mt-2 max-w-xl">
               Curated for shoppers in {c.name} — handpicked from India, duty-aware pricing, ships to your door.

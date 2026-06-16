@@ -1,0 +1,35 @@
+{
+  "summary": "Iteration 5 — focused regression after fixes for the 3 issues in iteration 4. ALL 5 review items PASS (5/5 = 100%). The two CRITICAL admin envelope crashes are resolved: /admin/users renders 100 rows without crash and search input filters to exactly 1 row for 'webtest'; /admin/activity-log renders 80 audit rows without crash. The LOW SSO toast bug is resolved: /sso?token=clearlyinvalid shows the readable toast 'String should have at least 20 characters' (FastAPI validation detail correctly stringified by extractErrorMessage helper) and redirects to /login; /sso (no token) shows 'SSO link is missing the token' and redirects to /login. Re-smoke of /admin, /admin/orders, /admin/sellers, /admin/payouts, /admin/team all render without React error overlay. POLISH: personalised rail title now renders 'Kia ora 🇳🇿' with a literal space between greeting text and flag emoji (DOM confirmed: <h2>Kia ora<!-- --> <span>🇳🇿</span></h2>). No regressions introduced.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Global (carry-over, non-blocking)",
+        "issues": [
+          "Pre-existing cosmetic console warning: woff2 font preloaded but not used within window load event. Carried from iterations 1-4. Not a blocker."
+        ]
+      }
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "All 3 iteration-4 fixes are correctly implemented in /app/frontend/lib/api.ts: adminUsers/adminOrders/adminSellers/adminSellersPending/adminTeam/adminActivityLog all use defensive unwrapping `Array.isArray(r) ? r : r?.users ?? []` which handles both array and envelope responses safely. extractErrorMessage helper correctly joins FastAPI detail arrays into readable strings.",
+    "Open enhancement (carry-over from iter-4, not blocking): /admin/users still fetches all users without ?limit/?offset pagination — at scale (5,903+ users) this returns a large JSON. Recommend server-side pagination + search.",
+    "Open enhancement (carry-over): personalised rail does not cancel in-flight fetches on rapid country switches — AbortController recommended.",
+    "Open enhancement (carry-over): SSO page's processed.current ref is set before async resolves; consider clearing on cleanup."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "n/a (frontend-only)",
+    "frontend": "5/5 = 100% — PASS: admin login, /admin/users renders 100 rows + search 'webtest' filters to 1 row, /admin/activity-log renders 80 audit rows, /admin + /admin/orders + /admin/sellers + /admin/payouts + /admin/team all render without crash, /sso?token=clearlyinvalid shows readable validation toast and redirects to /login, /sso (no token) shows 'SSO link is missing the token' and redirects, personalised rail greeting has visible space before flag emoji."
+  },
+  "test_credentials": "Admin OWNER: owner@allsale.co.nz / AllsaleOwner2026! (verified working). Shopper: webtest+allsale@example.com / Test@123456 (visible in /admin/users search).",
+  "seed_data_creation": "None — no admin destructive actions (approve/reject/mark-paid/invite) clicked. Backend state unchanged.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All iteration-4 issues are CONFIRMED FIXED. No remaining blockers from Phase 3. Toast text observed: invalid token => 'String should have at least 20 characters' (Pydantic min_length validator message), no-token => 'SSO link is missing the token' (client-side message). Admin endpoint envelope unwrap is now defensive — works for both old (array) and new ({users}/{events}/etc.) response shapes. Greeting DOM is now `<h2>Kia ora<!-- --> <span class=\"ml-1 inline-block text-3xl align-middle\">🇳🇿</span></h2>` — note the literal space text node inserted by `{' '}` between text and span. If main agent does another iteration, only open work is the 4 enhancements in critical_code_review_comments (pagination, AbortController, SSO ref cleanup) — none are blockers.",
+  "rca of the issue": "N/A — this was a re-test iteration. The 3 fixes from main agent (lib/api.ts envelope unwrap + extractErrorMessage helper + personalised-rail.tsx literal space) all behave correctly under live regression testing."
+}

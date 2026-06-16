@@ -43,7 +43,7 @@ export function LanguageSwitcher() {
         <ChevronDown className="w-3.5 h-3.5 opacity-60" />
       </button>
       {open && (
-        <div className="absolute right-0 mt-2 w-48 rounded-2xl bg-white border border-slate-200 shadow-xl p-1.5 z-50" data-testid="language-dropdown">
+        <div className="absolute right-0 mt-2 w-56 max-h-[60vh] overflow-y-auto rounded-2xl bg-white border border-slate-200 shadow-xl p-1.5 z-50" data-testid="language-dropdown">
           {SUPPORTED_LOCALES.map((code) => {
             const l = LOCALE_LABEL[code];
             return (

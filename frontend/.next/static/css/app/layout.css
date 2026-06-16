@@ -998,6 +998,9 @@ video {
 .max-h-\[90vh\] {
   max-height: 90vh;
 }
+.max-h-\[60vh\] {
+  max-height: 60vh;
+}
 .min-h-\[2\.5rem\] {
   min-height: 2.5rem;
 }
@@ -1801,6 +1804,9 @@ video {
 }
 .text-right {
   text-align: right;
+}
+.align-middle {
+  vertical-align: middle;
 }
 .font-heading {
   font-family: var(--font-heading), ui-sans-serif, system-ui;

@@ -30,13 +30,31 @@ export async function apiFetch<T = any>(
     let detail = `HTTP ${res.status}`;
     try {
       const body = await res.json();
-      detail = body.detail || body.message || JSON.stringify(body);
+      detail = extractErrorMessage(body) || detail;
     } catch {}
     throw new ApiError(detail, res.status);
   }
 
   if (res.status === 204) return undefined as T;
   return (await res.json()) as T;
+}
+
+// Turn FastAPI / generic JSON error bodies into a readable string.
+function extractErrorMessage(body: any): string | null {
+  if (!body) return null;
+  if (typeof body === "string") return body;
+  if (typeof body.detail === "string") return body.detail;
+  if (Array.isArray(body.detail)) {
+    return body.detail
+      .map((d: any) => (typeof d === "string" ? d : d?.msg || JSON.stringify(d)))
+      .join("; ");
+  }
+  if (typeof body.message === "string") return body.message;
+  try {
+    return JSON.stringify(body);
+  } catch {
+    return null;
+  }
 }
 
 export class ApiError extends Error {
@@ -249,10 +267,22 @@ export const api = {
     }),
   adminMe: (token?: string) => apiFetchAdmin<any>(`/api/admin/me`, { token }),
   adminOverview: () => apiFetchAdmin<any>(`/api/admin/overview`),
-  adminUsers: () => apiFetchAdmin<any[]>(`/api/admin/users`),
-  adminOrders: (limit = 50) => apiFetchAdmin<any[]>(`/api/admin/orders?limit=${limit}`),
-  adminSellers: () => apiFetchAdmin<any[]>(`/api/admin/sellers`),
-  adminSellersPending: () => apiFetchAdmin<any[]>(`/api/admin/sellers/pending`),
+  adminUsers: async () => {
+    const r = await apiFetchAdmin<any>(`/api/admin/users`);
+    return (Array.isArray(r) ? r : r?.users ?? []) as any[];
+  },
+  adminOrders: async (limit = 50) => {
+    const r = await apiFetchAdmin<any>(`/api/admin/orders?limit=${limit}`);
+    return (Array.isArray(r) ? r : r?.orders ?? []) as any[];
+  },
+  adminSellers: async () => {
+    const r = await apiFetchAdmin<any>(`/api/admin/sellers`);
+    return (Array.isArray(r) ? r : r?.sellers ?? []) as any[];
+  },
+  adminSellersPending: async () => {
+    const r = await apiFetchAdmin<any>(`/api/admin/sellers/pending`);
+    return (Array.isArray(r) ? r : r?.sellers ?? r?.pending ?? []) as any[];
+  },
   adminApproveSeller: (user_id: string) =>
     apiFetchAdmin<any>(`/api/admin/sellers/${user_id}/approve`, { method: "POST" }),
   adminRejectSeller: (user_id: string, reason: string) =>
@@ -260,7 +290,10 @@ export const api = {
   adminPayouts: (status = "available") => apiFetchAdmin<any>(`/api/admin/payouts?status=${status}`),
   adminMarkPayoutPaid: (id: string) =>
     apiFetchAdmin<any>(`/api/admin/payouts/${id}/mark-paid`, { method: "POST" }),
-  adminTeam: () => apiFetchAdmin<any[]>(`/api/admin/team`),
+  adminTeam: async () => {
+    const r = await apiFetchAdmin<any>(`/api/admin/team`);
+    return (Array.isArray(r) ? r : r?.team ?? r?.admins ?? []) as any[];
+  },
   adminTeamRoles: () => apiFetchAdmin<any>(`/api/admin/team/roles`),
   adminCreateAdmin: (body: { email: string; full_name: string; role: string }) =>
     apiFetchAdmin<any>(`/api/admin/team`, { method: "POST", body: JSON.stringify(body) }),
@@ -270,7 +303,10 @@ export const api = {
     apiFetchAdmin<any>(`/api/admin/team/${id}/reset-password`, { method: "POST" }),
   adminDeleteAdmin: (id: string) =>
     apiFetchAdmin<any>(`/api/admin/team/${id}`, { method: "DELETE" }),
-  adminActivityLog: () => apiFetchAdmin<any[]>(`/api/admin/activity-log`),
+  adminActivityLog: async () => {
+    const r = await apiFetchAdmin<any>(`/api/admin/activity-log`);
+    return (Array.isArray(r) ? r : r?.events ?? r?.entries ?? r?.log ?? []) as any[];
+  },
 };
 
 // Helper for admin endpoints (uses allsale_admin_token)
@@ -291,7 +327,22 @@ export async function apiFetchAdmin<T = any>(
     let detail = `HTTP ${res.status}`;
     try {
       const body = await res.json();
-      detail = body.detail || body.message || JSON.stringify(body);
+      detail = (function () {
+        if (!body) return null;
+        if (typeof body === "string") return body;
+        if (typeof body.detail === "string") return body.detail;
+        if (Array.isArray(body.detail)) {
+          return body.detail
+            .map((d: any) => (typeof d === "string" ? d : d?.msg || JSON.stringify(d)))
+            .join("; ");
+        }
+        if (typeof body.message === "string") return body.message;
+        try {
+          return JSON.stringify(body);
+        } catch {
+          return null;
+        }
+      })() || detail;
     } catch {}
     throw new ApiError(detail, res.status);
   }
