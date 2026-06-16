@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 
 export default function robots(): MetadataRoute.Robots {
+  const SITE = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BACKEND_URL || "";
   return {
     rules: [
       {
@@ -9,7 +10,7 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/account/", "/cart", "/checkout/", "/seller/", "/admin/", "/auth/"],
       },
     ],
-    sitemap: "https://shop.allsale.co.nz/sitemap.xml",
-    host: "https://shop.allsale.co.nz",
+    sitemap: SITE ? `${SITE}/sitemap.xml` : undefined,
+    host: SITE || undefined,
   };
 }

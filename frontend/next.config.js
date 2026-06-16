@@ -13,7 +13,8 @@ const nextConfig = {
       { protocol: "https", hostname: "**.cloudfront.net" },
       { protocol: "https", hostname: "**.amazonaws.com" },
       { protocol: "https", hostname: "**.allsale.co.nz" },
-      { protocol: "https", hostname: "allsale-shop.preview.emergentagent.com" },
+      { protocol: "https", hostname: "**.emergentagent.com" },
+      { protocol: "https", hostname: "**.emergent.host" },
     ],
   },
   async headers() {

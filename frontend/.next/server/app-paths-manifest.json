@@ -1,3 +1,6 @@
 {
-  "/page": "app/page.js"
+  "/sitemap.xml/route": "app/sitemap.xml/route.js",
+  "/robots.txt/route": "app/robots.txt/route.js",
+  "/page": "app/page.js",
+  "/products/page": "app/products/page.js"
 }

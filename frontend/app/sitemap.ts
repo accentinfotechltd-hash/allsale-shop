@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { BACKEND_URL } from "@/lib/utils";
 
-const SITE = "https://shop.allsale.co.nz";
+const SITE = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BACKEND_URL || "";
 
 export const revalidate = 3600; // 1 hour
 

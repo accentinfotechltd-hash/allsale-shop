@@ -51,7 +51,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 function productJsonLd(p: import("@/lib/api").Product) {
-  const site = "https://shop.allsale.co.nz";
+  const site = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BACKEND_URL || "";
   return {
     "@context": "https://schema.org/",
     "@type": "Product",
