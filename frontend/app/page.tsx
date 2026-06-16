@@ -231,9 +231,7 @@ export default async function HomePage() {
             <div className="flex flex-wrap gap-3">
               <Link href="/products" className="btn-primary">Start shopping</Link>
               <a
-                href="https://allsale-shop.preview.emergentagent.com"
-                target="_blank"
-                rel="noopener noreferrer"
+                href="/become-seller"
                 className="btn-secondary"
               >
                 Become a seller

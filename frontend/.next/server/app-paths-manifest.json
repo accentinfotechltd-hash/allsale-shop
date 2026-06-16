@@ -1,14 +1,18 @@
 {
-  "/products/page": "app/products/page.js",
-  "/product/[id]/page": "app/product/[id]/page.js",
-  "/cart/page": "app/cart/page.js",
   "/page": "app/page.js",
-  "/register/page": "app/register/page.js",
   "/login/page": "app/login/page.js",
-  "/checkout/cancel/page": "app/checkout/cancel/page.js",
-  "/auth/google-callback/page": "app/auth/google-callback/page.js",
-  "/_not-found/page": "app/_not-found/page.js",
+  "/become-seller/page": "app/become-seller/page.js",
+  "/products/page": "app/products/page.js",
+  "/cart/page": "app/cart/page.js",
+  "/admin/login/page": "app/admin/login/page.js",
+  "/seller/page": "app/seller/page.js",
+  "/seller/products/page": "app/seller/products/page.js",
+  "/seller/orders/page": "app/seller/orders/page.js",
+  "/seller/payouts/page": "app/seller/payouts/page.js",
+  "/seller/settings/page": "app/seller/settings/page.js",
   "/account/page": "app/account/page.js",
-  "/account/orders/page": "app/account/orders/page.js",
-  "/account/wishlist/page": "app/account/wishlist/page.js"
+  "/seller/onboarding/page": "app/seller/onboarding/page.js",
+  "/admin/page": "app/admin/page.js",
+  "/admin/users/page": "app/admin/users/page.js",
+  "/admin/orders/page": "app/admin/orders/page.js"
 }

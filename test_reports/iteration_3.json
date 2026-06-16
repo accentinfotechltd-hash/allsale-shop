@@ -1,0 +1,36 @@
+{
+  "summary": "Iteration 3 frontend-only test on allsale-web Phase 2 (SEO + i18n + Seller MVP + Admin MVP). ALL 15 review items pass. SEO endpoints (sitemap.xml with 24 URLs, robots.txt with full disallow list + Sitemap line, hreflang x6, product JSON-LD with @type=Product + priceCurrency=NZD) all valid. i18n language switcher correctly sets allsale_locale=hi cookie and html lang flips to 'hi' on reload; switching back to English restores 'en'. Seller MVP fully functional for the existing test user (already a seller, KYC pending_documents): auth gates redirect anon to /login?next=…, /become-seller bounces existing seller to /seller, dashboard shows 'Action needed: upload KYC documents' banner + KPI tiles + tier block, onboarding page renders 3 upload cards, products page shows empty state with CTA, orders shows 'No orders yet', payouts shows 4 KPIs at $0.00 with payouts-empty, settings renders Storefront/Contact/Bank/Vacation sections with 10 set-* fields. Admin MVP: gated routes redirect to /admin/login; bogus creds (admin@allsale.co.nz/wrong) → backend returns 401 → 'Invalid email or password' toast appears → user stays on /admin/login. Phase 1 regression smoke (home, /products with 48 cards, /cart guard, /account guard) all pass.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Global",
+        "issues": ["Pre-existing cosmetic console warning: woff2 font preloaded but not used within window load event (carried over from iterations 1 & 2). Not blocking."]
+      }
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Admin form data-testid naming is INCONSISTENT with the convention used elsewhere. The review-request note documented 'admin-login-page / admin-login-email / admin-login-password / admin-login-submit' but the actual implementation uses 'admin-login-page' (container) + 'admin-email-input' + 'admin-password-input' + 'admin-submit'. Consider renaming to 'admin-login-email', 'admin-login-password', 'admin-login-submit' to align with seller pages (which consistently use 'seller-*' prefix) and to match the documented contract — otherwise future test agents will have to discover the actual names again.",
+    "/api/admin/login is publicly reachable and returns 401 with a clear error message — good. Recommend adding a server-side rate-limit (e.g., 5 attempts / 10 min / IP) before launch since the email 'admin@allsale.co.nz' is enumerable from the placeholder.",
+    "Sitemap.xml uses the production hostname https://shop.allsale.co.nz which is correct for SEO, but lastmod for every URL is set to 'now' (request-time ISO timestamp). For static URLs (/, /products, /login, /register) the lastmod should be a build/deploy timestamp or omitted, otherwise crawlers will be told every URL changed today on every request.",
+    "robots.txt has BOTH a Cloudflare-managed block (User-Agent: *  Allow: /) and a hand-rolled block (User-Agent: *  Allow: /  Disallow: /account/ etc.). Two 'User-Agent: *' records are technically allowed but some crawlers only honour the first matching block — the Disallow rules for /account/, /cart, /checkout/, /seller/, /admin/, /auth/ may be ignored by a crawler that picks the Cloudflare block first. Consider merging into a single User-Agent: * block.",
+    "Language switcher only flips html lang attribute via cookie + reload — most page strings are still hard-coded English in components (acknowledged by main agent). Once full translation lands, consider also localising the canonical/hreflang URLs (currently all 6 alternates point to the same URL) so search engines actually discover Hindi pages.",
+    "Seller settings page is missing data-testid='settings-form' on the <form>; only individual inputs have set-* ids. Adding a wrapper testid would make e2e submission tests cleaner.",
+    "Header has TWO buttons of type='submit' on the admin/login page (header Search + admin Sign in). A test agent or screen-reader user could accidentally target the wrong one. Consider type='button' on Search until it's intentionally inside its own form (it already is, but two type=submit buttons in the same DOM is a footgun for default Enter-key submission)."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "n/a (frontend-only)",
+    "frontend": "100% — 15/15 review items verified: SEO(4), i18n(1), seller-anon-gate(1), become-seller-redirect(1), seller-dashboard(1), onboarding(1), products(1), orders(1), payouts(1), settings(1), admin-gate(1), admin-login-error(1), Phase 1 smoke(1)"
+  },
+  "test_credentials": "webtest+allsale@example.com / Test@123456 — JWT in localStorage['allsale_token']. NO admin credentials exist; admin/login was verified via 401 path only.",
+  "seed_data_creation": "None. No KYC files uploaded, no seller products created, no admin user provisioned. Backend state unchanged.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All Phase 2 surfaces are wired correctly. SEO endpoints emit hard-coded https://shop.allsale.co.nz (NOT the preview URL) — when running curl checks against the preview, expect production hostnames in <loc>/<link> tags. Admin form testids are 'admin-email-input', 'admin-password-input', 'admin-submit' (NOT 'admin-login-email' / 'admin-login-password' / 'admin-login-submit' as the iteration-3 review note suggested). Seller settings sections use uppercase eyebrow labels (e.g., 'STOREFRONT', 'BANK ACCOUNT (PAYOUTS)') — use case-insensitive matching. Cookie name for locale is 'allsale_locale'. Existing test user (webtest+allsale@example.com) is already a seller with verification_status='pending_documents'; /become-seller for that account redirects to /seller — to test the upgrade form, register a fresh user.",
+  "rca of the issue": "N/A — no bugs found in this iteration."
+}

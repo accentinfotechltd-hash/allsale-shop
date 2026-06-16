@@ -6,6 +6,7 @@ import { Search, ShoppingBag, User as UserIcon, Heart, Menu, X, ChevronDown } fr
 import { useApp } from "@/components/providers";
 import { useRouter, usePathname } from "next/navigation";
 import { CountrySwitcher } from "@/components/country-switcher";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 const PRIMARY_CATS = [
   { name: "Ethnic Fashion", slug: "Ethnic Fashion" },
@@ -99,6 +100,7 @@ export function Header() {
 
         {/* right cluster */}
         <div className="flex items-center gap-1 md:gap-2 ml-auto">
+          <LanguageSwitcher />
           <CountrySwitcher />
 
           <Link

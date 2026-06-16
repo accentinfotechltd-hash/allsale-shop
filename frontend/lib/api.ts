@@ -202,4 +202,99 @@ export const api = {
     const qs = new URLSearchParams(params as any).toString();
     return apiFetch<any>(`/api/shipping/quote?${qs}`);
   },
+
+  // ============ SELLER ============
+  sellerMe: () => apiFetch<any>(`/api/seller/me`, { auth: true }),
+  sellerStatus: () => apiFetch<any>(`/api/seller/me/status`, { auth: true }),
+  sellerUpgrade: (business: any) =>
+    apiFetch<any>(`/api/seller/upgrade`, { method: "POST", auth: true, body: JSON.stringify({ business }) }),
+  sellerSettings: () => apiFetch<any>(`/api/seller/profile/settings`, { auth: true }),
+  sellerSettingsUpdate: (body: any) =>
+    apiFetch<any>(`/api/seller/profile/settings`, { method: "PATCH", auth: true, body: JSON.stringify(body) }),
+  sellerProducts: () => apiFetch<Product[]>(`/api/seller/products`, { auth: true }),
+  sellerCreateProduct: (body: any) =>
+    apiFetch<Product>(`/api/seller/products`, { method: "POST", auth: true, body: JSON.stringify(body) }),
+  sellerUpdateProduct: (id: string, body: any) =>
+    apiFetch<Product>(`/api/seller/products/${id}`, { method: "PATCH", auth: true, body: JSON.stringify(body) }),
+  sellerDeleteProduct: (id: string) =>
+    apiFetch<any>(`/api/seller/products/${id}`, { method: "DELETE", auth: true }),
+  sellerOrders: () => apiFetch<any[]>(`/api/seller/orders`, { auth: true }),
+  sellerPayouts: () => apiFetch<any>(`/api/seller/payouts`, { auth: true }),
+  sellerTier: () => apiFetch<any>(`/api/seller/tier`, { auth: true }),
+  sellerWallet: () => apiFetch<any>(`/api/wallet`, { auth: true }),
+  sellerUploadDocument: async (type: "id_proof" | "business_proof", file: File) => {
+    const form = new FormData();
+    form.append("type", type);
+    form.append("file", file);
+    const url = `${BACKEND_URL}/api/seller/documents`;
+    const token = typeof window !== "undefined" ? window.localStorage.getItem("allsale_token") : null;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      body: form,
+    });
+    if (!res.ok) {
+      const t = await res.text();
+      throw new ApiError(t || `HTTP ${res.status}`, res.status);
+    }
+    return res.json();
+  },
+
+  // ============ ADMIN ============
+  // Admin uses a separate JWT stored at localStorage['allsale_admin_token']
+  adminLogin: (email: string, password: string) =>
+    apiFetch<{ access_token: string; admin: any }>(`/api/admin/login`, {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    }),
+  adminMe: (token?: string) => apiFetchAdmin<any>(`/api/admin/me`, { token }),
+  adminOverview: () => apiFetchAdmin<any>(`/api/admin/overview`),
+  adminUsers: () => apiFetchAdmin<any[]>(`/api/admin/users`),
+  adminOrders: (limit = 50) => apiFetchAdmin<any[]>(`/api/admin/orders?limit=${limit}`),
+  adminSellers: () => apiFetchAdmin<any[]>(`/api/admin/sellers`),
+  adminSellersPending: () => apiFetchAdmin<any[]>(`/api/admin/sellers/pending`),
+  adminApproveSeller: (user_id: string) =>
+    apiFetchAdmin<any>(`/api/admin/sellers/${user_id}/approve`, { method: "POST" }),
+  adminRejectSeller: (user_id: string, reason: string) =>
+    apiFetchAdmin<any>(`/api/admin/sellers/${user_id}/reject`, { method: "POST", body: JSON.stringify({ reason }) }),
+  adminPayouts: (status = "available") => apiFetchAdmin<any>(`/api/admin/payouts?status=${status}`),
+  adminMarkPayoutPaid: (id: string) =>
+    apiFetchAdmin<any>(`/api/admin/payouts/${id}/mark-paid`, { method: "POST" }),
+  adminTeam: () => apiFetchAdmin<any[]>(`/api/admin/team`),
+  adminTeamRoles: () => apiFetchAdmin<any>(`/api/admin/team/roles`),
+  adminCreateAdmin: (body: { email: string; full_name: string; role: string }) =>
+    apiFetchAdmin<any>(`/api/admin/team`, { method: "POST", body: JSON.stringify(body) }),
+  adminUpdateAdmin: (id: string, body: any) =>
+    apiFetchAdmin<any>(`/api/admin/team/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
+  adminResetPassword: (id: string) =>
+    apiFetchAdmin<any>(`/api/admin/team/${id}/reset-password`, { method: "POST" }),
+  adminDeleteAdmin: (id: string) =>
+    apiFetchAdmin<any>(`/api/admin/team/${id}`, { method: "DELETE" }),
+  adminActivityLog: () => apiFetchAdmin<any[]>(`/api/admin/activity-log`),
 };
+
+// Helper for admin endpoints (uses allsale_admin_token)
+export async function apiFetchAdmin<T = any>(
+  path: string,
+  opts: RequestInit & { token?: string } = {}
+): Promise<T> {
+  const { token, headers, ...rest } = opts;
+  const t = token ?? (typeof window !== "undefined" ? window.localStorage.getItem("allsale_admin_token") : null);
+  const finalHeaders: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(headers as Record<string, string>),
+  };
+  if (t) finalHeaders["Authorization"] = `Bearer ${t}`;
+  const url = path.startsWith("http") ? path : `${BACKEND_URL}${path}`;
+  const res = await fetch(url, { ...rest, headers: finalHeaders, cache: "no-store" });
+  if (!res.ok) {
+    let detail = `HTTP ${res.status}`;
+    try {
+      const body = await res.json();
+      detail = body.detail || body.message || JSON.stringify(body);
+    } catch {}
+    throw new ApiError(detail, res.status);
+  }
+  if (res.status === 204) return undefined as T;
+  return (await res.json()) as T;
+}

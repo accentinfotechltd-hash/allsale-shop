@@ -32,9 +32,53 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const p = await getProduct(id);
   if (!p) return { title: "Product not found · Allsale" };
   return {
-    title: `${p.name} · Allsale`,
+    title: p.name,
     description: p.description?.slice(0, 160),
-    openGraph: { images: p.images?.length ? p.images : [p.image] },
+    alternates: { canonical: `/product/${id}` },
+    openGraph: {
+      type: "website",
+      title: p.name,
+      description: p.description?.slice(0, 160),
+      images: p.images?.length ? p.images : [p.image],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: p.name,
+      description: p.description?.slice(0, 160),
+      images: p.images?.length ? p.images : [p.image],
+    },
+  };
+}
+
+function productJsonLd(p: import("@/lib/api").Product) {
+  const site = "https://shop.allsale.co.nz";
+  return {
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    name: p.name,
+    image: p.images?.length ? p.images : [p.image],
+    description: p.description,
+    sku: p.id,
+    category: p.category,
+    brand: p.seller_name ? { "@type": "Brand", name: p.seller_name } : undefined,
+    aggregateRating:
+      p.rating > 0
+        ? {
+            "@type": "AggregateRating",
+            ratingValue: p.rating.toFixed(1),
+            reviewCount: p.reviews_count,
+          }
+        : undefined,
+    offers: {
+      "@type": "Offer",
+      url: `${site}/product/${p.id}`,
+      priceCurrency: "NZD",
+      price: p.price_nzd.toFixed(2),
+      availability: p.in_stock
+        ? "https://schema.org/InStock"
+        : "https://schema.org/OutOfStock",
+      itemCondition: "https://schema.org/NewCondition",
+    },
   };
 }
 
@@ -47,6 +91,11 @@ export default async function ProductPage({ params }: Props) {
 
   return (
     <div data-testid="product-detail-page">
+      <script
+        type="application/ld+json"
+        // eslint-disable-next-line react/no-danger
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd(product)) }}
+      />
       <ProductDetailClient product={product} />
       {recs.length > 0 && (
         <section className="container-px py-16">

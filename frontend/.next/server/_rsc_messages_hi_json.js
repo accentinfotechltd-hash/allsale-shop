@@ -1,0 +1,25 @@
+"use strict";
+/*
+ * ATTENTION: An "eval-source-map" devtool has been used.
+ * This devtool is neither made for production nor for readable output files.
+ * It uses "eval()" calls to create a separate source file with attached SourceMaps in the browser devtools.
+ * If you are trying to read the output file, select a different devtool (https://webpack.js.org/configuration/devtool/)
+ * or disable the default devtool with "devtool: false".
+ * If you are looking for production-ready output files, see mode: "production" (https://webpack.js.org/configuration/mode/).
+ */
+exports.id = "_rsc_messages_hi_json";
+exports.ids = ["_rsc_messages_hi_json"];
+exports.modules = {
+
+/***/ "(rsc)/./messages/hi.json":
+/*!**************************!*\
+  !*** ./messages/hi.json ***!
+  \**************************/
+/***/ ((module) => {
+
+module.exports = /*#__PURE__*/JSON.parse('{"common":{"shop_now":"बाज़ार खरीदें","whats_new":"नया क्या है","search_placeholder":"साड़ी, गहने, मसाले, सजावट खोजें…","all_products":"सभी उत्पाद","new_arrivals":"नए आगमन","sign_in":"साइन इन","sign_up":"खाता बनाएँ","sign_out":"साइन आउट","cart":"कार्ट","account":"खाता","wishlist":"विशलिस्ट","checkout":"सुरक्षित चेकआउट","add_to_cart":"कार्ट में जोड़ें","sold_out":"स्टॉक खत्म","in_stock":"उपलब्ध","loading":"लोड हो रहा है…","back":"वापस","continue":"जारी रखें","save":"सहेजें","edit":"संपादित करें","delete":"हटाएँ","cancel":"रद्द करें","price_each":"{price} प्रति","items_count":"{count, plural, =0 {कोई आइटम नहीं} one {# आइटम} other {# आइटम}}","made_in_india":"भारत में निर्मित","ships_in_days":"{min}–{max} दिनों में डिलीवरी","made_with_love":"आओतेरोआ और भारत में प्रेम से बनाया गया"},"home":{"hero_eyebrow":"भारत · हस्तचयनित · विश्वव्यापी डिलीवरी","hero_title_1":"भारतीय बाज़ार,","hero_title_2":"आपके दरवाज़े तक।","hero_subtitle":"बनारस की साड़ियाँ, मुरादाबाद के पीतल के बर्तन, केरल के मसाले, जयपुर के गहने — न्यूज़ीलैंड, ऑस्ट्रेलिया और इससे आगे तक, सभी शुल्क पहले से ही जोड़ कर भेजे जाते हैं।","trust_orders":"★ 4.8 · 12,000+ ऑर्डर भेजे गए","trust_tracking":"शिपरॉकेट X द्वारा ट्रैक्ड","trust_currency":"अपनी स्थानीय मुद्रा में भुगतान","explore_eyebrow":"कारीगरी के अनुसार खरीदें","explore_title":"बाज़ार का अन्वेषण करें","featured_eyebrow":"इस सप्ताह का संपादन","featured_title":"आपके लिए हस्तचयनित","story_eyebrow":"हमारी कहानी","story_title":"500+ भारतीय विक्रेता, एक भरोसेमंद बाज़ार।","newsletter_title":"दिवाली, शादियों और त्योहारी संपादनों की पहली झलक।","newsletter_subtitle":"हर सप्ताह एक ईमेल। विशेष कूपन, नई कारीगर कहानियाँ, और NZ, AU, US, UK व CA के लिए शिपिंग डील्स।","newsletter_cta":"सब्सक्राइब करें"},"footer":{"shop":"खरीदें","help":"मदद","contact":"संपर्क करें","shipping":"शिपिंग और शुल्क","returns":"वापसी","secure_payments":"सुरक्षित भुगतान","secure_payments_desc":"स्ट्राइप-संचालित चेकआउट · 256-बिट एन्क्रिप्शन","tracked_shipping":"ट्रैक्ड वैश्विक शिपिंग","tracked_shipping_desc":"शिपरॉकेट X · 7–14 दिन डोर-टू-डोर","multi_currency":"बहु-मुद्रा","multi_currency_desc":"NZD · AUD · USD · GBP · CAD स्वतः-पहचानित","support":"वास्तविक मानवीय सहायता","support_desc":"hello@allsale.co.nz · 24 घंटे में जवाब","tagline":"Allsale एक क्रॉस-बॉर्डर बाज़ार है जो हस्तचयनित भारतीय कारीगरी — साड़ियाँ, गहने, मसाले, पीतल के बर्तन और बहुत कुछ — न्यूज़ीलैंड, ऑस्ट्रेलिया, अमेरिका, यूके और कनाडा के घरों तक पहुँचाता है।"}}');
+
+/***/ })
+
+};
+;
