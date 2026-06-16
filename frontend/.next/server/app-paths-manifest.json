@@ -1,13 +1,7 @@
 {
-  "/sso/page": "app/sso/page.js",
   "/login/page": "app/login/page.js",
   "/page": "app/page.js",
-  "/admin/orders/page": "app/admin/orders/page.js",
-  "/admin/sellers/page": "app/admin/sellers/page.js",
-  "/admin/payouts/page": "app/admin/payouts/page.js",
   "/admin/team/page": "app/admin/team/page.js",
   "/admin/activity-log/page": "app/admin/activity-log/page.js",
-  "/admin/login/page": "app/admin/login/page.js",
-  "/admin/page": "app/admin/page.js",
   "/admin/users/page": "app/admin/users/page.js"
 }
