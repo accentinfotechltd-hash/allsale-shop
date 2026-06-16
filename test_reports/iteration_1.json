@@ -1,0 +1,75 @@
+{
+  "summary": "Frontend e2e testing of allsale-web Next.js port against external FastAPI backend. Most user flows pass (home, search, currency switcher, products listing, PDP, login/register, auth guards, account hub, mobile menu, 404, /checkout/cancel). Two CRITICAL integration bugs block cart quantity edits and Stripe checkout. One minor logout redirect deviation from spec.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {
+        "flow": "Cart quantity update (increment / decrement / remove)",
+        "issue": "Backend POST /api/cart treats `quantity` as additive delta and IGNORES the `action` field. Frontend sends `{product_id, quantity: <new_qty>, action: 'set'|'remove'}` (lib/api.ts:158, cart/page.tsx:40) and assumes the backend will overwrite/remove. Result: every click on cart-increment-{id}, cart-decrement-{id}, cart-remove-{id} ADDS the requested quantity to the existing line. Verified with curl: sending `{quantity:3, action:'set'}` against qty=42 produced qty=45. In the UI, decrement and remove both make qty grow. Affects entire cart UX.",
+        "affected_selectors": ["[data-testid=cart-increment-*]", "[data-testid=cart-decrement-*]", "[data-testid=cart-remove-*]"]
+      },
+      {
+        "flow": "Stripe checkout session",
+        "issue": "POST /api/checkout/session returns 422: `body.address: Field required`. Frontend (lib/api.ts:164-175) only sends `{origin_url, currency, country, shipping_tier?, shipping_courier_id?}` and never collects a shipping address. Clicking [data-testid=checkout-button] silently fails — user stays on /cart, no Stripe redirect, no toast. Backend payload: `{\"detail\":[{\"type\":\"missing\",\"loc\":[\"body\",\"address\"],\"msg\":\"Field required\"}]}`. This blocks the entire purchase funnel.",
+        "affected_selectors": ["[data-testid=checkout-button]"]
+      },
+      {
+        "flow": "Logout redirect",
+        "issue": "Spec says logout should redirect to `/`, but clicking [data-testid=account-logout-button] clears localStorage and stays on /account, which then triggers the unauth guard and bounces to /login?next=%2Faccount. Token is cleared correctly, but landing UX is wrong.",
+        "affected_selectors": ["[data-testid=account-logout-button]"]
+      }
+    ],
+    "design_issues": [
+      {
+        "screen": "Account hub overview",
+        "issues": ["Cart tile shows `Cart (1)` while /cart shows `Your cart (2)` and header badge shows total qty (e.g. 11). The three counters disagree (line-items vs total qty vs an unknown count on the tile). Should be consistent."]
+      },
+      {
+        "screen": "Header preload",
+        "issues": ["Console warning: woff2 font preloaded but not used within window's load event. Cosmetic but indicates an unused preload link in app/layout.tsx."]
+      }
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "FIX CART: Update lib/api.ts `updateCart` (and cart/page.tsx setQty) to match the actual backend contract. Backend POST /api/cart is additive-only and ignores `action`. Either (a) compute delta on the client (new_qty - current_qty, including negative deltas for decrement) and POST that, OR (b) switch to the real backend endpoints (likely PATCH /api/cart/{product_id} and DELETE /api/cart/{product_id} — confirm with backend agent). For remove, a dedicated DELETE call is needed; sending `action:'remove'` does nothing today.",
+    "FIX CHECKOUT: The /api/checkout/session endpoint requires a shipping `address` object. Either (a) add an address-collection step on /cart (or a /checkout/address page) before calling checkoutSession, or (b) reuse a previously-saved address from the user profile, and include it in the POST body. Until then no purchase is possible.",
+    "FIX LOGOUT: In components/providers.tsx logout() (or wherever account-logout-button handler lives), router.push('/') after clearing token instead of relying on guard redirect to /login.",
+    "MINOR: Reconcile cart counters across header badge, account overview Cart tile, and /cart page heading so they all use the same definition (recommend total quantity).",
+    "MINOR: Remove unused font preload link (or fix `as` attribute) in app/layout.tsx to silence the woff2 preload warning."
+  ],
+  "critical_code_review_comments": [
+    "lib/api.ts updateCart presumes a backend contract (`action: 'set'|'remove'`) that the live backend does not honor — must verify endpoint shape against backend before assuming.",
+    "checkoutSession typing in lib/api.ts marks `shipping_tier` and `shipping_courier_id` optional but does not include `address` which is required by backend — TS type is out of sync with backend Pydantic model.",
+    "cart/page.tsx has no UI affordance for collecting shipping address — needed for checkout to ever succeed.",
+    "Auth guard works via client-side redirect; consider also guarding via middleware.ts so unauthenticated users don't briefly see /account or /cart content before redirect.",
+    "Logout handler should explicitly navigate to `/` (spec) rather than letting the unauth guard bounce the user to /login."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "n/a (frontend-only test)",
+    "frontend": "~70% (12/17 flows pass; 3 critical-or-spec-deviation flows fail: cart qty edits, Stripe checkout, logout redirect; 2 minor counter/preload issues)"
+  },
+  "test_credentials": "Used webtest+allsale@example.com / Test@123456 from /app/memory/test_credentials.md — credentials are valid and JWT is correctly stored at localStorage['allsale_token'].",
+  "seed_data_creation": "None. Used existing seeded user. Cart on this user is now polluted with TEST default stock qty>=45 due to additive-cart bug — main agent may want to clear it before re-test.",
+  "retest_needed": true,
+  "main_agent_can_self_test": false,
+  "context_for_next_testing_agent": "Reuse the same test user. The bag (product_id 55f0a169-...) and TEST default stock (0f8e16dc-...) are already in the cart with inflated qty. Verify cart edits by FIRST checking with curl that POST /api/cart with action:'set' really does update vs add — if backend was fixed, frontend may already work. For checkout, confirm what shape `address` should take (look at the mobile app's payload if available) and ensure the frontend sends it. The frontend public URL is https://allsale-store.preview.emergentagent.com; backend is https://allsale-shop.preview.emergentagent.com. DO NOT submit Stripe payments.",
+  "rca of the issue": {
+    "cart_inc_dec_remove": {
+      "reproduction": "1) Login with webtest+allsale@example.com. 2) Open /cart. 3) Click [data-testid=cart-increment-<id>] once. 4) Observe quantity grows by more than 1 / subtotal grows by more than item price. 5) Click [data-testid=cart-decrement-<id>] once — quantity grows again. 6) Click [data-testid=cart-remove-<id>] once — quantity still grows, item NOT removed.",
+      "root_cause": "Backend POST /api/cart adds `body.quantity` to the existing line item and ignores `body.action`. Frontend sends `{quantity: newQty, action: 'set'|'remove'}` expecting overwrite/delete semantics. The two contracts are mismatched.",
+      "evidence": "curl POST /api/cart with `{product_id, quantity:3, action:'set'}` against qty=42 returned qty=45.",
+      "mitigation": "Either (a) on the client, compute delta and POST with action:'add' (frontend-only fix; remove will require a separate endpoint), or (b) discover and call the real PATCH/DELETE endpoints for set/remove (cleanest)."
+    },
+    "checkout_422": {
+      "reproduction": "1) Login. 2) Ensure cart has items. 3) Click [data-testid=checkout-button]. 4) Observe 422 in network: `body.address: Field required`. 5) UI stays on /cart with no error toast.",
+      "root_cause": "Frontend never collects nor sends a shipping address; backend Pydantic model marks `address` required.",
+      "mitigation": "Add an address form to the checkout flow and include the resulting object in `api.checkoutSession({..., address})`. Update the TS type in lib/api.ts to reflect required `address`."
+    }
+  }
+}
